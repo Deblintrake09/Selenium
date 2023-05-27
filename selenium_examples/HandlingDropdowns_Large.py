@@ -1,6 +1,5 @@
 from selenium import webdriver
 from selenium.webdriver.common.by import By
-from selenium.webdriver.support.wait import WebDriverWait
 from selenium.webdriver.support.select import Select
 from selenium.webdriver.support import expected_conditions as EC
 from webdriver_manager.chrome import ChromeDriverManager
@@ -13,8 +12,7 @@ driver = webdriver.Chrome(options=options, executable_path=ChromeDriverManager()
 
 driver.get("http://wikipedia.com")
 driver.maximize_window()
-driver.implicitly_wait(10)
-wait = WebDriverWait(driver, 10)
+driver.implicitly_wait(1)
 
 # Selecting dropdown by visible name
 dropdown = driver.find_element(By.ID, 'searchLanguage')
