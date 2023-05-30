@@ -20,6 +20,7 @@ driver.get("https://mail.rediff.com/cgi-bin/login.cgi")
 driver.implicitly_wait(1)
 
 driver.find_element(By.XPATH, '//div/input[2]').click()
+
 alert = Alert(driver)
 
 print(f'Alert text : {alert.text}')
