@@ -1,38 +1,42 @@
 import pytest
-from selenium.webdriver.common.by import By
+from selenium.webdriver.support import expected_conditions as ec
 from selenium.webdriver.support.wait import WebDriverWait
-from selenium.webdriver.support import expected_conditions as EC
-from test_wazuh_dashboard import DASHBOARD_IP, DASHBOARD_PASS, DASHBOARD_USER
-from test_wazuh_dashboard.configurations import handle_cert_authority_screen
+from test_wazuh_dashboard.tools import DASHBOARD_IP, DASHBOARD_PASS, DASHBOARD_USER
+from test_wazuh_dashboard.tools.common import handle_cert_authority_screen
+from test_wazuh_dashboard.tools.models.login_page import LoginPage
 
 
-@pytest.mark.parametrize('username, password, isvalid', [(DASHBOARD_USER, DASHBOARD_PASS, True),
-                                                ('fake_username', DASHBOARD_PASS, False),
-                                                (DASHBOARD_USER, 'fake_password', False)])
-def test_dashboard_login(driver, username, password, isvalid):
+test_cases_data = [(DASHBOARD_USER, DASHBOARD_PASS, True),
+                   ('fake_username', DASHBOARD_PASS, False),
+                   (DASHBOARD_USER, 'fake_password', False)]
+
+
+@pytest.mark.parametrize('username, password, isvalid', test_cases_data)
+def test_dashboard_login(username, password, isvalid, driver, close_driver):
 
     # Open URL
     driver.get(f'https://{DASHBOARD_IP}')
-    # Setup wait for later
-    wait = WebDriverWait(driver, 8)
+
     driver.implicitly_wait(1)
+    wait = WebDriverWait(driver, 8)
 
     handle_cert_authority_screen(driver)
 
     assert driver.title == 'Wazuh', f'Unexpected title found: {driver.title}'
 
-    wait.until(lambda d: d.find_element(By.CLASS_NAME, 'euiForm'))
+    # Define LoginPage Object
+    form = LoginPage(driver)
 
-    form_fields = driver.find_elements(By.CSS_SELECTOR, '.euiFieldText.euiFieldText--inGroup')
-    form_fields[0].send_keys(username)
-    form_fields[1].send_keys(password)
-    driver.find_element(By.CSS_SELECTOR, '.euiButtonContent.euiButton__content').click()
+    # Check LoginForm exists
+    form.get_login_form()
 
+    # Enter username, password and click login button
+    form.enter_username(username)
+    form.enter_password(password)
+    form.click_login_button()
+
+    # If credentials are valid, check new page's title, else assert login error message
     if isvalid:
-        wait.until(EC.title_contains('Wazuh - Wazuh'))
+        wait.until(ec.title_contains('Wazuh - Wazuh'))
     else:
-        assert 'Invalid username or password. Please try again.' in driver.find_element(By.XPATH, '//form/div[4]/div/div/b').text
-
-    driver.quit()
-
-
+        assert 'Invalid username or password. Please try again.' in form.get_login_error_message()
